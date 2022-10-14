@@ -9,18 +9,13 @@ import (
 	"github.com/go-chi/cors"
 )
 
-type jsonResponse struct {
-	Error   bool   `json:"error"`
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
-}
-
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 
+	// specify who is allowed to connect
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*"},
-		AllowedMethods:   []string{"GET", "POST", "DELETE", "OPTIONS"},
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
@@ -29,8 +24,7 @@ func (app *Config) routes() http.Handler {
 
 	mux.Use(middleware.Heartbeat("/ping"))
 
-	mux.Get("/", app.Status)
-
+	mux.Post("/authenticate", app.Authenticate)
 	return mux
 }
 

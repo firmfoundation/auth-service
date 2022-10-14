@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/firmfoundation/auth-service/cmd/model"
+	"github.com/joho/godotenv"
 
 	_ "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
@@ -24,6 +25,11 @@ type Config struct {
 func main() {
 	log.Println("Starting authentication service..", webPort)
 
+	//load env
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 	//connect to db
 	conn := connectToDB()
 	if conn == nil {
@@ -40,16 +46,15 @@ func main() {
 		Handler: app.routes(),
 	}
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
-func openDB(dns string) (*pgx.Conn, error) {
+func openDB(url string) (*pgx.Conn, error) {
 	//db, err := sql.Open("pgx", dns)
-	//urlExample := "postgres://postgres:password@127.0.0.1:5432/users"
-	conn, err := pgx.Connect(context.Background(), dns)
+	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +69,10 @@ func openDB(dns string) (*pgx.Conn, error) {
 
 func connectToDB() *pgx.Conn {
 	var counts int
-	dns := os.Getenv("DNS")
+	url := "postgres://" + os.Getenv("DB_USERNAME") + ":" + os.Getenv("DB_PASSWORD") + "@" + os.Getenv("DB_HOST") + ":" + os.Getenv("DB_PORT") + "/" + os.Getenv("DB_NAME")
 
 	for {
-		connection, err := openDB(dns)
+		connection, err := openDB(url)
 
 		if counts > 10 {
 			log.Println(err)
